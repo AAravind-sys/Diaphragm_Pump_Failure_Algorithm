@@ -1,68 +1,65 @@
-# 👋 Hello, I'm Aravind Kumar Arunagiri!
+# AODD Pump Condition Monitoring: FFT and Entropy Analysis
 
-🎓 **Mechanical Engineer | Data Scientist in Condition Monitoring | Industry 4.0 Enthusiast**
+Analysis notebooks for an air-operated double diaphragm (AODD) pump test setup. The pump is a pulsating machine, so the raw pressure signals are converted into frequency spectra and the energy in the failure-related frequency band is followed over running hours.
 
-Welcome to my GitHub profile! I'm working on **data-driven condition monitoring** and **predictive maintenance** solutions for mechanical systems. My goal is to bring reliable, data-driven insights into industrial processes, contributing to the next evolution of **Industry 4.0**.
+The data came from bench tests with diaphragm cracks introduced on purpose, logged on two pumps (P1 and P2).
 
-<!-- Add a graphic relevant to condition monitoring or data science in industry -->
+## What the project does
 
----
+1. Reads the DAQ log files (`.tdms`) and builds a proper timestamp for every sample.
+2. Removes duplicate timestamps and infinite values, then stores raw and cleaned data in MySQL.
+3. Keeps only the samples where the pump is actually running (air supply pressure above 93).
+4. Cuts the signal into time windows (5 minutes or 1 hour), removes the mean and runs an FFT on each window.
+5. Saves the spectrum plots and a frequency/amplitude table for each run.
+6. Calculates Shannon entropy of the air supply pressure for each window as a second health indicator.
 
-## 🔧 Skills and Expertise
+Block diagrams and flow charts are in [docs/architecture.md](docs/architecture.md).
 
-### 📊 Data Science & Machine Learning Tools
+## Notebooks
 
-- **Signal Processing Techniques:**
-  - Fast Fourier Transform (FFT)
-  - Wavelet Analysis
-  - Time Waveform Analysis
+| Notebook | What it does |
+|---|---|
+| `01_tdms_to_mysql.ipynb` | Reads the TDMS files for one day, builds the timestamp, cleans duplicates and inf values, writes raw and cleaned tables to MySQL |
+| `02_time_series_eda.ipynb` | Distributions, outliers, correlation, resampling (120 ms to 30 min), decomposition, ACF, ADF and KPSS stationarity tests |
+| `03_fft_5min_windows.ipynb` | Splits each day into 5-minute slices and saves an FFT plot for every slice |
+| `04_fft_and_shannon_entropy.ipynb` | Main notebook. 1-hour windows, FFT, frequency/amplitude export to CSV, Shannon entropy per window |
+| `05_min_max_analysis.ipynb` | Local minima and maxima of each pressure/flow signal, hourly averages and box plots |
 
-- **Languages and Tools:**
-    <p align="left"> <a href="https://www.mysql.com/" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/mysql/mysql-original-wordmark.svg" alt="mysql" width="85" height="85"/> </a>  
-    <a href="https://pandas.pydata.org/" target="_blank" rel="noreferrer">
-    <img src="https://raw.githubusercontent.com/devicons/devicon/2ae2a900d2f041da66e950e4d48052658d850630/icons/pandas/pandas-original.svg" alt="pandas" width="85" height="85"/> </a> <a href="https://www.python.org" target="_blank" rel="noreferrer"> 
-    <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="85" height="85"/> </a> <a href="https://scikit-learn.org/" target="_blank" rel="noreferrer"> <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Scikit_learn_logo_small.svg" alt="scikit_learn" width="85" height="85"/> </a> <a href="https://seaborn.pydata.org/" target="_blank" rel="noreferrer"> <img src="https://seaborn.pydata.org/_images/logo-mark-lightbg.svg" alt="seaborn" width="85" height="85"/> </a> </p>
+## Signals used
 
-## **Certifications:**
-  - Vibration Analysis, **CAT II Certified**
+Air supply pressure, water suction pressure, water discharge pressure, water suction and discharge flow rate, air supply flow rate, and cycles per minute (CPM). The FFT notebooks work on air supply pressure.
 
----
+## Analysis settings
 
-## 💼 Current Role and Projects
+- Sampling interval: 30 ms (about 33.3 Hz), so the highest frequency that can be seen is about 16.7 Hz.
+- Frequency resolution is 1 divided by the window length: about 0.0033 Hz for a 5-minute window and about 0.00028 Hz for a 1-hour window.
+- Amplitude in the plots and CSV files is the raw FFT magnitude, not divided by the number of samples. Compare windows of the same length only.
+- Shannon entropy is calculated on the distribution of pressure values inside each window, base 2.
 
-In my role as **Technical Lead** at **Dover India**, I focus on:
+## Requirements
 
-- Leading **data-driven condition monitoring** and **predictive maintenance** projects
-- Developing **predictive models** and dashboards to improve equipment reliability
-- Creating impactful visualizations and data insights to drive productivity and efficiency
+Python 3.10
 
----
+```
+pip install numpy pandas scipy matplotlib seaborn statsmodels scikit-learn nptdms sqlalchemy mysql-connector-python
+```
 
-## 📊 GitHub Projects
+MySQL is only needed for notebook 01.
 
-🔍 My repositories include projects on:
+## Running it
 
-- Predictive analysis and **failure probability estimation**
-- Signal processing applications for **industrial diagnostics**
-- **Condition monitoring** tools and visualizations for operational insights
----
+The notebooks read from local folders. Change the path variables in the first cells to your own folders before running:
 
-## 🌐 Let’s Connect!
+- `tdms_path` in notebook 01 for the TDMS files
+- the CSV folder and output folder in notebooks 03 and 04
+- the database user, password and database names in notebook 01
 
-I'm always open to discussing **industrial data science**, **predictive maintenance**, and innovations for **Industry 4.0**. Connect with me:
+Run 01 first, export the cleaned table to CSV, then run 03 and 04 on those CSV files.
 
-- [LinkedIn](https://www.linkedin.com/in/your-linkedin-profile)
-- [Email](mailto:your-email@example.com)
+## Data
 
----
+No measurement data is included in this repository. The TDMS logs and CSV exports are not published.
 
-## 📈 My Interests
+## Author
 
-- **Industrial Data Science**: Leveraging data to drive actionable insights and smarter machinery.
-- **Predictive Maintenance**: Applying data science techniques to forecast component failures and prevent downtime.
-- **Industry 4.0**: Empowering traditional industries through digital transformation and analytics.
-
-![Industry 4.0 Graphic](https://img.shields.io/badge/Industry%204.0-0A66C2?style=for-the-badge)
-<!-- Add a relevant image that reflects your interest in Industry 4.0 or industrial data science -->
-
----
+[Your name]
