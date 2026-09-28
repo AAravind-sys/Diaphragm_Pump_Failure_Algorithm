@@ -15,15 +15,6 @@ The data came from bench tests with diaphragm cracks introduced on purpose, logg
 
 Block diagrams and flow charts are in [docs/architecture.md](docs/architecture.md).
 
-## Notebooks
-
-| Notebook | What it does |
-|---|---|
-| `01_tdms_to_mysql.ipynb` | Reads the TDMS files for one day, builds the timestamp, cleans duplicates and inf values, writes raw and cleaned tables to MySQL |
-| `02_time_series_eda.ipynb` | Distributions, outliers, correlation, resampling (120 ms to 30 min), decomposition, ACF, ADF and KPSS stationarity tests |
-| `03_fft_5min_windows.ipynb` | Splits each day into 5-minute slices and saves an FFT plot for every slice |
-| `04_fft_and_shannon_entropy.ipynb` | Main notebook. 1-hour windows, FFT, frequency/amplitude export to CSV, Shannon entropy per window |
-| `05_min_max_analysis.ipynb` | Local minima and maxima of each pressure/flow signal, hourly averages and box plots |
 
 ## Signals used
 
