@@ -1,47 +1,65 @@
-<h1 align="center">Aravind Kumar Arunagiri</h1>
-<h3 align="center">Industrial AI Engineer | Physics-ML  & Signal Processing Techniques</h3>
+# AODD Pump Condition Monitoring: FFT and Entropy Analysis
 
-<p align="center">
-  <a href="https://linkedin.com/in/aravind-kumar-arunagiri-iaiml">
-    <img src="https://img.shields.io/badge/LinkedIn-Connect-blue?style=flat&logo=linkedin" />
-  </a>
-  <img src="https://img.shields.io/badge/ISO%2018436--1-Category%20II%20Vibration%20Analyst-green?style=flat" />
-  <img src="https://img.shields.io/badge/Experience-7%2B%20years-orange?style=flat" />
-</p>
+Analysis notebooks for an air-operated double diaphragm (AODD) pump test setup. The pump is a pulsating machine, so the raw pressure signals are converted into frequency spectra and the energy in the failure-related frequency band is followed over running hours.
 
-## 🛠️ Executive Summary
+The data came from bench tests with diaphragm cracks introduced on purpose, logged on two pumps (P1 and P2).
 
-I build **Physics-Informed Machine Learning (PIML)** systems, digital twins, and end-to-end predictive maintenance pipelines for industrial machinery and water utility infrastructure. My work bridges **first-principles mechanical engineering** with **production-grade MLOps**, turning messy, high-frequency IoT sensor telemetry into actionable operational decisions and closed-loop scheduling.
+## What the project does
 
-* 🎯 **Proven Impact:** Engineered models delivering **5–8% energy optimization** and **25–35% earlier fault detection** relative to ISO 20816-3 baselines.
-* 🏬 **Government-Scale Deployments:** Architected and deployed analytical engines for municipal water infrastructure (**BWSSB Bengaluru & BMC Mumbai**).
-* 🔬 **Research & Publications:** Published author on AI-enabled vibration forecasting and pump scheduling at **IEEMA 2026** and **AWWA India 2025**.
+1. Reads the DAQ log files (`.tdms`) and builds a proper timestamp for every sample.
+2. Removes duplicate timestamps and infinite values, then stores raw and cleaned data in MySQL.
+3. Keeps only the samples where the pump is actually running (air supply pressure above 93).
+4. Cuts the signal into time windows (5 minutes or 1 hour), removes the mean and runs an FFT on each window.
+5. Saves the spectrum plots and a frequency/amplitude table for each run.
+6. Calculates Shannon entropy of the air supply pressure for each window as a second health indicator.
 
----
+Block diagrams and flow charts are in [docs/architecture.md](docs/architecture.md).
 
-## ⚡ Technical Stack & Architecture
+## Notebooks
 
-| Layer | Tools & Frameworks |
-| :--- | :--- |
-| **Domain & Physics** | Vibration Analysis (ISO 18436-1 Cat II), Electrical Signature Analysis (ESA), CFD (ANSYS Fluent), SolidWorks |
-| **Physics-ML & Time-Series** | Multi-Task PINNs, LSTM-Autoencoders, Chronos Transformers, Prophet, SARIMAx, Scikit-Learn |
-| **Signal Processing** | FFT Spectral Analysis, STL Decomposition, Robust Scaling, Feature Engineering |
-| **MLOps & Deployment** | PyTorch, FastAPI, Docker, AWS SageMaker, MLflow, GitHub Actions |
-| **Languages & Frameworks** | Python, PySpark, NumPy, Pandas|
+| Notebook | What it does |
+|---|---|
+| `01_tdms_to_mysql.ipynb` | Reads the TDMS files for one day, builds the timestamp, cleans duplicates and inf values, writes raw and cleaned tables to MySQL |
+| `02_time_series_eda.ipynb` | Distributions, outliers, correlation, resampling (120 ms to 30 min), decomposition, ACF, ADF and KPSS stationarity tests |
+| `03_fft_5min_windows.ipynb` | Splits each day into 5-minute slices and saves an FFT plot for every slice |
+| `04_fft_and_shannon_entropy.ipynb` | Main notebook. 1-hour windows, FFT, frequency/amplitude export to CSV, Shannon entropy per window |
+| `05_min_max_analysis.ipynb` | Local minima and maxima of each pressure/flow signal, hourly averages and box plots |
 
----
+## Signals used
 
-## 📈 Research & Speaking Engagements
+Air supply pressure, water suction pressure, water discharge pressure, water suction and discharge flow rate, air supply flow rate, and cycles per minute (CPM). The FFT notebooks work on air supply pressure.
 
-* **IEEMA 2026:** *"AI-Enabled Time Series Forecasting of Vibration Trends in Pumping Systems for Early Fault Signature Analysis"* (Mumbai, June 2026).
-* **AWWA India 2025:** *"AI-Powered Pump Scheduling for Energy-Efficient Water Distribution"* (4th Annual International Conference, 2025).
+## Analysis settings
 
----
+- Sampling interval: 30 ms (about 33.3 Hz), so the highest frequency that can be seen is about 16.7 Hz.
+- Frequency resolution is 1 divided by the window length: about 0.0033 Hz for a 5-minute window and about 0.00028 Hz for a 1-hour window.
+- Amplitude in the plots and CSV files is the raw FFT magnitude, not divided by the number of samples. Compare windows of the same length only.
+- Shannon entropy is calculated on the distribution of pressure values inside each window, base 2.
 
-## 📫 Connect With Me
+## Requirements
 
-* **Email:** `aravi.aero@gmail.com`
-* **Location:** Bengaluru / Tamil Nadu, India
-  
-### 📫 Reach me
-[LinkedIn](https://linkedin.com/in/aravind-kumar-arunagiri-iaiml) · Bengaluru, India
+Python 3.10
+
+```
+pip install numpy pandas scipy matplotlib seaborn statsmodels scikit-learn nptdms sqlalchemy mysql-connector-python
+```
+
+MySQL is only needed for notebook 01.
+
+## Running it
+
+The notebooks read from local folders. Change the path variables in the first cells to your own folders before running:
+
+- `tdms_path` in notebook 01 for the TDMS files
+- the CSV folder and output folder in notebooks 03 and 04
+- the database user, password and database names in notebook 01
+
+Run 01 first, export the cleaned table to CSV, then run 03 and 04 on those CSV files.
+
+## Data
+
+No measurement data is included in this repository. The TDMS logs and CSV exports are not published.
+
+## Author
+
+[Your name]
